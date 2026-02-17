@@ -14,11 +14,15 @@ env/
 # IDE
 .idea/
 .idea
+.vscode/
+*.swp
+
 
 # Distribution / packaging
 dist/
 build/
 *.egg-info/
+scr.egg-info/
 
 # pytest
 .pytest_cache/
@@ -31,3 +35,9 @@ build/
 .ruff_cache/
 
 data
+.python-version
+data/
+*.log
+*.sqlite
+.DS_Store
+Thumbs.db
