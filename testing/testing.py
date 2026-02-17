@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 import torch.optim as optim
 import os
 
-from main import evaluate, train
+from ecotorch import evaluate, train, Tracker
 
 # Deletable, I mostly run my codes in terminal, so it is cleaner from me to run the tests this way
 os.system('clear' if os.name != "nt" else 'cls')
@@ -67,7 +67,8 @@ net = TestNet().to(device)
 criterion = nn.CrossEntropyLoss().to(device)
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-net, loss, _, _ = train(net, criterion, optimizer, trainloader, 5, device)
+with Tracker() as tracker:
+    net, loss, _, _ = train(net, criterion, optimizer, trainloader, 5, device)
 
 print("Finished training")
 
