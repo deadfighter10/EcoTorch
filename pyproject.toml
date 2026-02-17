@@ -8,9 +8,12 @@ authors = [
 ]
 dependencies = [
     "datasets>=4.5.0",
+    "geoip2fast>=1.2.2",
     "pandas>=3.0.0",
     "pandas-stubs~=3.0.0",
+    "pycountry>=26.2.16",
     "pynvml>=13.0.1",
+    "pytest>=9.0.2",
     "ruff>=0.15.1",
     "torch>=2.10.0",
     "torchvision>=0.25.0",
