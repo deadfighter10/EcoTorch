@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import torch.nn.functional as f
 import torchvision
 import torchvision.transforms as transforms
 import torch.optim as optim
@@ -8,7 +8,7 @@ import os
 
 from ecotorch import evaluate, train, Tracker
 
-# Deletable, I mostly run my codes in terminal, so it is cleaner from me to run the tests this way
+# Deletable, I mostly run my codes in Terminal, so it is cleaner from me to run the tests this way
 os.system('clear' if os.name != "nt" else 'cls')
 
 print("Starting...")
@@ -34,14 +34,14 @@ test_dataset = torchvision.datasets.MNIST(
     transform=transform
 )
 
-trainloader = torch.utils.data.DataLoader(
+train_loader = torch.utils.data.DataLoader(
     train_dataset,
     batch_size=BATCH_SIZE,
     shuffle=True,
     num_workers=0
 )
 
-testloader = torch.utils.data.DataLoader(
+test_loader = torch.utils.data.DataLoader(
     test_dataset,
     batch_size=BATCH_SIZE,
     shuffle=False,
@@ -58,8 +58,8 @@ class TestNet(nn.Module):
 
     def forward(self, x):
         x = self.flatten(x)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = f.relu(self.fc1(x))
+        x = f.relu(self.fc2(x))
         x = self.fc3(x)
         return x
 
@@ -68,10 +68,10 @@ criterion = nn.CrossEntropyLoss().to(device)
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 with Tracker() as tracker:
-    net, loss, _, _ = train(net, criterion, optimizer, trainloader, 5, device)
+    net, loss, _, _ = train(net, criterion, optimizer, train_loader, 5, device)
 
 print("Finished training")
 
-acc = evaluate(net, testloader, device)
+acc = evaluate(net, test_loader, device)
 
 print(f"Accuracy: {acc}%")
