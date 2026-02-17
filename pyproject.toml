@@ -1,6 +1,27 @@
 [project]
 name = "ecotorch"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.0.1"
+description = "A lightweight package to measure the ecological and financial effect of training and evaluation of pytorch projects."
 requires-python = ">=3.13"
-dependencies = []
+authors = [
+    { name = "Leo Nagy" }
+]
+dependencies = [
+    "datasets>=4.5.0",
+    "pandas>=3.0.0",
+    "pandas-stubs~=3.0.0",
+    "pynvml>=13.0.1",
+    "torch>=2.10.0",
+    "torchvision>=0.25.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+# This part is the "magic" that fixes your import error
+[tool.setuptools.packages.find]
+where = ["scr"]
+
+[tool.setuptools.package-data]
+ecotorch = ["*.csv"]
