@@ -1,9 +1,10 @@
+from .datahandler import DataHandler
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import time
 import threading
-from .datahandler import DataHandler
 
 def _transfer_optimizer_to_device(optimizer: optim.Optimizer, device: str) -> None:
     """
