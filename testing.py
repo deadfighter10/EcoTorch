@@ -1,15 +1,12 @@
-import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 import torchvision.transforms as transforms
 import torch.optim as optim
-import datasets
-import math
 import os
 
-from main import evaluate
+from main import evaluate, train
 
 # Deletable, I mostly run my codes in terminal, so it is cleaner from me to run the tests this way
 os.system('clear' if os.name != "nt" else 'cls')
@@ -67,29 +64,13 @@ class TestNet(nn.Module):
         return x
 
 net = TestNet().to(device)
-
 criterion = nn.CrossEntropyLoss().to(device)
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-for epoch in range(EPOCH):
-    running_loss = 0.0
-    for i, data in enumerate(trainloader):
-        inputs, labels = data
-
-        optimizer.zero_grad()
-
-        outputs = net(inputs)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-
-        running_loss += loss.item()
-        if i % 2000 == 1999:
-            print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
-            running_loss = 0.0
+net, loss, _, _ = train(net, criterion, optimizer, trainloader, 5, device)
 
 print("Finished training")
 
-acc = evaluate(net, testloader)
+acc = evaluate(net, testloader, device)
 
 print(f"Accuracy: {acc}%")
