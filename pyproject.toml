@@ -11,6 +11,7 @@ dependencies = [
     "pandas>=3.0.0",
     "pandas-stubs~=3.0.0",
     "pynvml>=13.0.1",
+    "ruff>=0.15.1",
     "torch>=2.10.0",
     "torchvision>=0.25.0",
 ]
