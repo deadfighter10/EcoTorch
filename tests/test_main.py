@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from unittest.mock import MagicMock, patch
-from ecotorch.main import _transfer_optimizer_to_device, evaluate, train, Tracker
+from ecotorch.core import _transfer_optimizer_to_device, evaluate, train, Tracker
 
 class SimpleModel(nn.Module):
     def __init__(self):
@@ -71,13 +71,13 @@ def test_tracker_context_manager():
         monitor_instance = MockMonitor.return_value
 
         with Tracker() as tracker:
-            assert tracker.start_time != 0
-            assert tracker.gpu_monitor == monitor_instance
+            assert tracker._start_time != 0
+            assert tracker._gpu_monitor == monitor_instance
             monitor_instance.start.assert_called_once()
 
         monitor_instance.join.assert_called_once()
-        assert tracker.end_time != 0
-        assert tracker.stop_event.is_set()
+        assert tracker._end_time != 0
+        assert tracker._stop_event.is_set()
 
 def test_tracker_methods():
     tracker = Tracker()

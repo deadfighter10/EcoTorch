@@ -44,4 +44,3 @@ class DataHandler:
 if __name__ == "__main__":
     test = DataHandler()
     print(test.get_intensity())
-

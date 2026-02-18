@@ -2,7 +2,7 @@
 A lightweight package to measure the ecological and financial effect of training and evaluation of pytorch projects.
 """
 
-from .main import Tracker, evaluate, train
+from .core import Tracker, evaluate, train, Mode
 from .datahandler import DataHandler
 
 __version__ = "0.0.1"
