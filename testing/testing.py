@@ -7,11 +7,14 @@ import torch.optim as optim
 import os
 
 from ecotorch import evaluate, train, Tracker, Mode
+from ecotorch.watcher import Monitor
 
 # Deletable, I mostly run my codes in Terminal, so it is cleaner from me to run the tests this way
 os.system('clear' if os.name != "nt" else 'cls')
 
 print("Starting...")
+monitor = Monitor()
+print(monitor.get_current_power())
 
 EPOCH = 5
 BATCH_SIZE = 16

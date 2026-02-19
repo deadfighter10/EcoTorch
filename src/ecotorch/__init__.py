@@ -5,7 +5,7 @@ A lightweight package to measure the ecological and financial effect of training
 from .core import Tracker, evaluate, train, Mode
 from .datahandler import DataHandler
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 __author__ = "David Leonard Nagy"
 __copyright__ = "Copyright 2026, David Leonard Nagy"
 __credits__ = ["David Leonard Nagy"]
