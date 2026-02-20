@@ -1,56 +1,64 @@
 # EcoTorch
 
-A lightweight, plug-and-play tool to measure the ecological impact and efficiency of your PyTorch models.
+[![PyPI version](https://img.shields.io/pypi/v/ecotorch.svg)](https://pypi.org/project/ecotorch/)
+[![Python versions](https://img.shields.io/pypi/pyversions/ecotorch.svg)](https://pypi.org/project/ecotorch/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-EcoTorch runs in the background while your models learn or get tested. It tracks exactly how much power your machine uses, figures out your carbon footprint based on your location, and gives you a final efficiency score. It works seamlessly across Mac, Windows, and Linux.
+EcoTorch is a lightweight, plug-and-play Python package designed to measure and track the ecological and financial impact of training and evaluating PyTorch models.
+
+## Key Features
+
+- **Seamless Integration**: Track training and evaluation sessions using simple Python context managers.
+- **Hardware Monitoring**: Support for NVIDIA GPUs (via NVML) and Apple Silicon (via custom SMC monitoring).
+- **Global Carbon Intensity**: Automatically detects location and uses up-to-date carbon intensity data.
+- **Efficiency Scoring**: Provides a specialized score that balances model improvement with environmental cost.
 
 ## Installation
 
-You can grab the tool directly from the public Python store. Open your terminal and type:
+Install EcoTorch via pip:
 
-`pip install ecotorch`
-
+```bash
+pip install ecotorch
+```
 
 ## Quick Start
 
-You do not need to rewrite any of your existing work to use EcoTorch. Just wrap your normal learning or testing loops inside the `TrainTracker` and `EvalTracker`.
-
-### Quick example:
+You don't need to rewrite your existing code. Just wrap your training or evaluation loops with `TrainTracker` or `EvalTracker`.
 
 ```python
 import torch
-from ecotorch import TrainTracker, EvalTracker, Mode
+from ecotorch import TrainTracker, EvalTracker
 
-# Set up your model and data
 model = ...
-train_loader = ... 
-test_loader = ...
-epoch = ...
+train_loader = ...
+epochs = 10
 
-# Wrap your train loop in the TrainTracker
-with TrainTracker(epochs=epoch, model=model, train_dataloader=train_loader) as train_tracker:
-    # Training logic...
+# Track Training
+with TrainTracker(model=model, epochs=epochs, train_dataloader=train_loader) as tracker:
+    # Your training loop here
     initial_loss = 2.5
     final_loss = 0.5
-
-# Final score
-score = train_tracker.calculate_efficiency_score(initial_loss=initial_loss, final_loss=final_loss)
-print(f"Efficiency Score: {score}")
-
-# You can track evaluation and inference
-with EvalTracker(test_dataloader=test_loader, train_tracker=train_tracker) as eval_tracker:
-    # Evaluation logic...
-    acc = 0.9
-
-# Final score
-score = eval_tracker.calculate_efficiency_score(accuracy=acc)
-print(f"Efficiency Score: {score}")
+    
+    # Calculate efficiency score
+    score = tracker.calculate_efficiency_score(initial_loss=initial_loss, final_loss=final_loss)
+    print(f"Training Efficiency Score: {score}")
 ```
 
-A fully implemented example is available in [testing.py](testing/testing.py)
+## Documentation
 
-## How It Works
-When you start the tracker, it automatically:
-- Finds your location: It checks where you are in the world to find out how clean your local power grid is.
-- Reads the power meter: It taps directly into your machine's graphics chip or Apple brain to read the exact power drops being used.
-- Does the math: When the block finishes, it calculates your total energy used (kWh), your emitted carbon (grams of CO2), and a final efficiency score based on how much your model improved versus how much energy it burned.
+For full documentation, including a getting started guide, API reference, and detailed methodology, please see the [docs/](docs/) directory:
+
+- [Introduction](docs/index.md)
+- [Getting Started](docs/getting-started.md)
+- [API Reference](docs/api-reference.md)
+- [Methodology](docs/methodology.md)
+- [Examples](docs/examples/)
+- [FAQ](docs/faq.md)
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](docs/contributing.md) and [Code of Conduct](docs/code-of-conduct.md).
+
+## License
+
+EcoTorch is released under the MIT License.
