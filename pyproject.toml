@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "ecotorch"
-version = "0.2.2"
+version = "0.2.3"
 description = "A lightweight package to measure the ecological and financial effect of training and evaluation of pytorch projects."
 requires-python = ">=3.11"
 authors = [
