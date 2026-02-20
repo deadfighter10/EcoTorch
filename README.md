@@ -38,10 +38,10 @@ with TrainTracker(model=model, epochs=epochs, train_dataloader=train_loader) as 
     # Your training loop here
     initial_loss = 2.5
     final_loss = 0.5
-    
-    # Calculate efficiency score
-    score = tracker.calculate_efficiency_score(initial_loss=initial_loss, final_loss=final_loss)
-    print(f"Training Efficiency Score: {score}")
+
+# Calculate efficiency score
+score = tracker.calculate_efficiency_score(initial_loss=initial_loss, final_loss=final_loss)
+print(f"Training Efficiency Score: {score}")
 ```
 
 ## Documentation
