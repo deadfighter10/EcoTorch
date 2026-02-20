@@ -40,7 +40,7 @@ def test_get_intensity_no_data(data_handler):
             data_handler.get_intensity('Unknown Country')
 
 def test_get_countries(data_handler):
-    assert data_handler._get_countries() == ['Austria', 'United States']
+    assert data_handler.countries == ['Austria', 'United States']
 
 def test_get_latest_year_by_country_code(data_handler):
     assert data_handler._get_latest_year_by_country_code('USA') == 2021

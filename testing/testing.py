@@ -6,15 +6,11 @@ import torchvision.transforms as transforms
 import torch.optim as optim
 import os
 
-from ecotorch import evaluate, train, Tracker, Mode
-from ecotorch.watcher import Monitor
+from ecotorch import evaluate, train, Mode, TrainTracker, EvalTracker
 
 # Deletable, I mostly run my codes in Terminal, so it is cleaner from me to run the tests this way
 os.system('clear' if os.name != "nt" else 'cls')
 
-print("Starting...")
-monitor = Monitor()
-print(monitor.get_current_power())
 
 EPOCH = 5
 BATCH_SIZE = 16
@@ -70,15 +66,15 @@ net = TestNet().to(device)
 criterion = nn.CrossEntropyLoss().to(device)
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-with Tracker(mode=Mode.TRAIN, epochs=EPOCH, model=net, train_dataloader=train_loader) as train_tracker:
+with TrainTracker(epochs=EPOCH, model=net, train_dataloader=train_loader) as train_tracker:
     net, final_loss, first_loss, _, _ = train(net, criterion, optimizer, train_loader, EPOCH, device)
 print(train_tracker.calculate_efficiency_score(initial_loss=first_loss, final_loss=final_loss))
 
 print("Finished training")
 
-with Tracker(mode=Mode.EVAL, model=net, test_dataloader=test_loader) as eval_tracker:
+with EvalTracker(test_dataloader=test_loader, train_tracker=train_tracker) as eval_tracker:
     acc = evaluate(net, test_loader, device)
 
 print(eval_tracker.calculate_efficiency_score(accuracy=acc))
 
-print(f"Accuracy: {acc}%")
+print(f"Accuracy: {acc*100}%")
