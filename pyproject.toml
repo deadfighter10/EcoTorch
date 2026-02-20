@@ -27,3 +27,10 @@ dependencies = [
 wheel.packages = ["src/ecotorch"]
 wheel.exclude = ["src/ecotorch/watcher/cpp"]
 cmake.build-type = "Release"
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+line_length = 88

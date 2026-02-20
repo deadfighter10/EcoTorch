@@ -1,5 +1,7 @@
 # EcoTorch
 
+[![CI](https://github.com/deadfighter10/EcoTorch/actions/workflows/ci.yml/badge.svg)](https://github.com/deadfighter10/EcoTorch/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/deadfighter10/EcoTorch/branch/main/graph/badge.svg)](https://codecov.io/gh/deadfighter10/EcoTorch)
 [![PyPI version](https://img.shields.io/pypi/v/ecotorch.svg)](https://pypi.org/project/ecotorch/)
 [![Python versions](https://img.shields.io/pypi/pyversions/ecotorch.svg)](https://pypi.org/project/ecotorch/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

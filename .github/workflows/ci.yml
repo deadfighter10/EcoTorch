@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests on ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
+        python: ["3.11", "3.12", "3.13"]
+
+    env:
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up CMake (>=3.24)
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: ^3.24.0
+
+      - name: Show tool versions
+        run: |
+          python -V
+          uv --version
+          cmake --version
+
+      - name: Install build and dev dependencies with uv
+        run: |
+          uv pip install -U pip wheel build
+          uv pip install -e . pytest pytest-cov flake8 black isort
+
+      - name: Lint with flake8
+        run: flake8 src/ tests/
+
+      - name: Check formatting with black
+        run: black --check .
+
+      - name: Check imports order with isort
+        run: isort --check-only .
+
+      - name: Run tests with coverage
+        run: pytest --cov=ecotorch --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
