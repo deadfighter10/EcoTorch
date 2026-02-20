@@ -1,4 +1,5 @@
 from .datahandler import DataHandler
+from .watcher import Monitor
 
 import torch
 import torch.nn as nn
@@ -7,6 +8,7 @@ import time
 import threading
 from enum import Enum, auto
 import math
+from abc import ABC, abstractmethod
 
 def _transfer_optimizer_to_device(optimizer: optim.Optimizer, device: str) -> None:
     """
@@ -60,7 +62,6 @@ def evaluate(
 
     return round(correct/total, 4)
 
-
 def train(model: nn.Module,
           criterion: nn.Module,
           optimizer: optim.Optimizer,
@@ -96,7 +97,7 @@ def train(model: nn.Module,
 
     running_loss = 0.0
     first_loss = 0.0
-    for epoch in range(epoch):
+    for e in range(epoch):
         running_loss = 0.0
         for i, data in enumerate(train_loader):
             inputs, labels = data
@@ -114,36 +115,21 @@ def train(model: nn.Module,
                 first_loss = loss.item()
 
             if i % 500 == 499:
-                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 500:.3f}')
+                print(f'[{e + 1}, {i + 1:5d}] loss: {running_loss / 500:.3f}')
                 running_loss = 0.0
     return model, running_loss/500, first_loss, criterion, optimizer
 
+
 class ModeError(Exception):
     pass
+
 
 class Mode(Enum):
     TRAIN = auto()
     EVAL = auto()
     OTHER = auto()
 
-class _Monitor(threading.Thread):
-    def __init__(self, name, data_list: list, stop_event: threading.Event):
-        super().__init__()
-        self._name = name
-        self._data_list = data_list
-        self._stop_event = stop_event
-
-    def run(self):
-        start_watts = 25.0
-        while not self._stop_event.is_set():
-            #TODO Implement NVIDIA and other monitoring logic
-            #This is a mock logic to simulating the thermal throttling on a mac m4 air
-            current_watts = max(12.0, start_watts - (len(self._data_list) * 0.1))
-            kw_reading = current_watts / 1000.0
-            self._data_list.append(kw_reading)
-            time.sleep(1)
-
-class Tracker:
+class Tracker(ABC):
     """
     Tracks energy usage and cost during a specific time window.
 
@@ -163,24 +149,23 @@ class Tracker:
     :type _end_time: float
     """
     def __init__(self,
-        mode: Mode, model: nn.Module,
+        mode: Mode,
+        model: nn.Module,
         epochs: int = None,
         train_dataloader: torch.utils.data.DataLoader = None,
         test_dataloader: torch.utils.data.DataLoader = None,
+        data_handler: DataHandler = None,
+        country: str = None
     ) -> None:
-        if mode == Mode.TRAIN and train_dataloader is None:
-            raise ValueError("Train dataloader cannot be None in train mode.")
-        if mode == Mode.EVAL and test_dataloader is None:
-            raise ValueError("Test dataloader cannot be None in test mode.")
-        if mode == Mode.OTHER:
-            raise NotImplementedError("No other mode is implemented yet, please use train or eval.")
-
         self.energy_usage = []
         self.cost = 0
         self.total_time = 0
 
         self._gpu_monitor = None
-        self._handler = DataHandler()
+        if data_handler is None:
+            self._handler = DataHandler()
+        else:
+            self._handler = data_handler
         self._mode = mode
         self._is_closed = False
         self._stop_event = threading.Event()
@@ -193,6 +178,7 @@ class Tracker:
         elif self._mode == Mode.EVAL:
             self._dataloader = test_dataloader
             self._epochs = 0
+        self._country = country
 
     def __enter__(self):
         self._start_time = time.time()
@@ -208,9 +194,60 @@ class Tracker:
         self.total_time = round(self._end_time - self._start_time, 4)
         self._is_closed = True
 
-        print(f"The block emitted {self._get_co2_emission}g CO2")
+        print(f"The block emitted {self._co2_emission}g CO2")
         print(f"The block took {self.total_time} second to execute.")
+        print(f"The block used {self.used_energy} kwh to execute.")
         return False
+
+    @abstractmethod
+    def calculate_efficiency_score(self, accuracy: float = None, initial_loss: float = None, final_loss: float = None) -> float:
+        """
+        Calculate the efficiency score of a model.
+
+        :param initial_loss: The first loss in the training.
+        :param final_loss: The final loss in the training.
+        :param accuracy: Accuracy of the model.
+        :return: The efficiency score.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def _calculate_c_score(self) -> int:
+        pass
+
+    @property
+    def _calculate_kwh(self) -> float:
+        if len(self.energy_usage) == 0:
+            return 0.0
+        return sum(self.energy_usage) / 3600000
+
+    @property
+    def _co2_emission(self) -> float:
+        if self._country is not None: return round(self._calculate_kwh * self._handler.get_intensity(self._country), 4)
+        return round(self._calculate_kwh * self._handler.get_intensity(), 4)
+
+    @property
+    def _data_handler(self) -> DataHandler:
+        return self._handler
+
+    @property
+    def used_energy(self) -> float:
+        return round(self._calculate_kwh, 4)
+
+
+class TrainTracker(Tracker):
+    def __init__(self,
+        model: nn.Module,
+        epochs: int,
+        train_dataloader: torch.utils.data.DataLoader,
+        country: str = None
+    ) -> None:
+        self._model = model
+        self._epochs = epochs
+        self._train_dataloader = train_dataloader
+        self._country = country
+        super().__init__(Mode.TRAIN, model, epochs=epochs, train_dataloader=train_dataloader, country=country)
 
     def calculate_efficiency_score(self, accuracy: float = None, initial_loss: float = None, final_loss: float = None) -> float:
         """
@@ -221,8 +258,6 @@ class Tracker:
         :param accuracy: Accuracy of the model.
         :return: The efficiency score.
         """
-        # if self._mode != Mode.EVAL:
-        #     raise ModeError("Tracker needs to be in EVAL mode to calculate efficiency score!")
 
         if accuracy is not None and not (0.0 <= accuracy <= 1.0):
             raise ValueError("Accuracy must be between 0 and 1 (inclusive).")
@@ -232,53 +267,112 @@ class Tracker:
                 "The Tracker did not finish tracking; call this only after the 'with' block completes."
             )
 
-        if self._mode == Mode.TRAIN:
-            if initial_loss is None:
-                raise ValueError("Initial loss cannot be None in train mode!")
-            if final_loss is None:
-                raise ValueError("Final loss cannot be None in train mode!")
-            _c_score = self._calculate_c_score_training
-            _progress = max(0.0, 1.0 - (final_loss / initial_loss))
-            _emission = self._get_co2_emission
-            _penalty = math.exp(-1.0 * (_emission / _c_score))
-            score = _progress * _penalty
+        if initial_loss is None:
+            raise ValueError("Initial loss cannot be None in train mode!")
+        if final_loss is None:
+            raise ValueError("Final loss cannot be None in train mode!")
 
-        elif self._mode == Mode.EVAL:
-            if accuracy is None:
-                raise ValueError("Accuracy cannot be None in eval mode!")
-            _c_score = self._calculate_c_score_eval
-            _emission = self._get_co2_emission
-            _penalty = math.exp(-1.0 * (_emission / _c_score))
-            score = accuracy * _penalty
-
+        _c_score = self._calculate_c_score
+        if initial_loss == 0.0:
+            _progress = 0.0
         else:
-            raise RuntimeError("Failed to calculate efficiency score: unsupported mode.")
+            _progress = max(0.0, 1.0 - (final_loss / initial_loss))
+        _emission = self._co2_emission
+        _penalty = math.exp(-1.0 * (_emission / _c_score))
+        score = _progress * _penalty
 
         return round(score, 4)
 
     @property
-    def _calculate_kwh(self) -> float:
-        if len(self.energy_usage) == 0:
-            return 0.0
-        return sum(self.energy_usage) / 3600
-
-    @property
-    def _calculate_c_score_training(self) -> int:
+    def _calculate_c_score(self) -> int:
         P = sum(p.numel() for p in self._model.parameters())
         D = getattr(self._dataloader.dataset, '__len__', lambda: 0)() * self._epochs
         return 6 * P * D
 
     @property
-    def _calculate_c_score_eval(self) -> int:
+    def country(self) -> str:
+        return self._country
+
+    @property
+    def model(self) -> nn.Module:
+        return self._model
+
+
+class EvalTracker(Tracker):
+    def __init__(self,
+        test_dataloader: torch.utils.data.DataLoader,
+        train_tracker: TrainTracker = None,
+        model: nn.Module = None,
+        country: str = None,
+    ) -> None:
+        if train_tracker:
+            if country is not None:
+                self._country = country
+            else:
+                self._country = train_tracker.country
+            super().__init__(Mode.EVAL, train_tracker.model, test_dataloader=test_dataloader, data_handler=train_tracker._data_handler, country=self._country)
+        else:
+            if model is None:
+                raise ValueError("Please provide a model or TrainTracker!")
+
+            super().__init__(Mode.EVAL, model, test_dataloader=test_dataloader, country=country)
+
+    def calculate_efficiency_score(self, accuracy: float = None, initial_loss: float = None, final_loss: float = None) -> float:
+        """
+        Calculate the efficiency score of a model.
+
+        :param initial_loss: The first loss in the training.
+        :param final_loss: The final loss in the training.
+        :param accuracy: Accuracy of the model.
+        :return: The efficiency score.
+        """
+
+        if accuracy is not None and not (0.0 <= accuracy <= 1.0):
+            raise ValueError("Accuracy must be between 0 and 1 (inclusive).")
+
+        if not self._is_closed:
+            raise RuntimeError(
+                "The Tracker did not finish tracking; call this only after the 'with' block completes."
+            )
+
+        if accuracy is None:
+            raise ValueError("Accuracy cannot be None in eval mode!")
+
+        _c_score = self._calculate_c_score
+        _emission = self._co2_emission
+        _penalty = math.exp(-1.0 * (_emission / _c_score))
+        score = accuracy * _penalty
+
+        return round(score, 4)
+
+    @property
+    def _calculate_c_score(self) -> int:
         P = sum(p.numel() for p in self._model.parameters())
         D = getattr(self._dataloader.dataset, '__len__', lambda: 0)()
         return 2 * P * D
 
     @property
-    def _get_co2_emission(self) -> float:
-        return round(self._calculate_kwh * self._handler.get_intensity(), 4)
+    def country(self) -> str:
+        return self._country
 
-    def _fetch_common_cloud_prices(self):
-        #TODO Write the fetch for common cloud prices
-        pass
 
+class _Monitor(threading.Thread):
+    def __init__(self,
+        name,
+        data_list: list,
+        stop_event: threading.Event
+    ) -> None:
+        super().__init__()
+        self._name = name
+        self._data_list = data_list
+        self._stop_event = stop_event
+        self._watcher = Monitor()
+
+    def run(self) -> None:
+        while not self._stop_event.is_set():
+            self._data_list.append(self._watcher.get_current_power())
+            self._stop_event.wait(1)
+
+    @property
+    def data_list(self) -> list:
+        return self._data_list
