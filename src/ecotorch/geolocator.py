@@ -13,11 +13,15 @@ def get_ip() -> str:
 def get_location() -> str:
 	warnings.filterwarnings('ignore')
 	geoip = GeoIP2Fast()
-	return convert_country_to_iso(geoip.lookup(get_ip()).country_name)
+	try:
+		found_name = geoip.lookup(get_ip()).country_name
+		return convert_country_to_iso(found_name)
+	except requests.RequestException:
+		return "World"
 
 def convert_country_to_iso(country_name: str):
 	try:
 		result = pycountry.countries.search_fuzzy(country_name)[0]
 		return result.alpha_3
 	except (LookupError, IndexError):
-		return None
+		return "World"
