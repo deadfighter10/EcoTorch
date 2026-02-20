@@ -74,6 +74,9 @@ private:
     IOReportSubscriptionRef subscription = nullptr;
     CFMutableDictionaryRef channels = nullptr;
 
+    // 1. Create the new empty container
+    CFMutableDictionaryRef subbedChannels = nullptr;
+
 public:
     Monitor() {
         channels = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
@@ -87,23 +90,31 @@ public:
         }
         CFRelease(energyGroup);
 
-        subscription = IOReportCreateSubscription(NULL, channels, NULL, 0, NULL);
+        // 2. Hand the container to Apple with an '&' so they know to fill it
+        subscription = IOReportCreateSubscription(NULL, channels, &subbedChannels, 0, NULL);
     }
 
     ~Monitor() {
         if (subscription) CFRelease(subscription);
         if (channels) CFRelease(channels);
+
+        // Clean up the new container when you are done
+        if (subbedChannels) CFRelease(subbedChannels);
     }
 
     double get_current_power() {
-        if (!subscription) return 0.0;
+        if (!subscription) {
+            return 0.0;
+        }
 
-        CFDictionaryRef sample1 = IOReportCreateSamples(subscription, channels, NULL);
-        if (!sample1) return 0.0;
+        CFDictionaryRef sample1 = IOReportCreateSamples(subscription, subbedChannels, NULL);
+        if (!sample1) {
+            return 0.0;
+        }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-        CFDictionaryRef sample2 = IOReportCreateSamples(subscription, channels, NULL);
+        CFDictionaryRef sample2 = IOReportCreateSamples(subscription, subbedChannels, NULL);
         if (!sample2) {
             CFRelease(sample1);
             return 0.0;
@@ -113,11 +124,30 @@ public:
 
         double total_energy_mj = 0.0;
 
-        CFDictionaryApplyFunction(delta, ApplyPowerSample, &total_energy_mj);
+        // Open the master box and get the list of records
+        if (delta) {
+            CFArrayRef channelsArray = (CFArrayRef)CFDictionaryGetValue(delta, CFSTR("IOReportChannels"));
+
+            if (channelsArray) {
+                // Count how many records we have
+                CFIndex count = CFArrayGetCount(channelsArray);
+
+                // Read them one by one
+                for (CFIndex i = 0; i < count; i++) {
+                    CFDictionaryRef sample = (CFDictionaryRef)CFArrayGetValueAtIndex(channelsArray, i);
+
+                    long raw_value = IOReportSimpleGetIntegerValue(sample, 0);
+                    CFStringRef unitRef = IOReportChannelGetUnitLabel(sample);
+                    std::string unit = cfstring_to_stdstring(unitRef);
+
+                    total_energy_mj += convert_to_mj(raw_value, unit);
+                }
+            }
+            CFRelease(delta);
+        }
 
         CFRelease(sample1);
         CFRelease(sample2);
-        CFRelease(delta);
 
         return total_energy_mj / 100.0;
     }

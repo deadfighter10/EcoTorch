@@ -1,43 +1,43 @@
 cmake_minimum_required(VERSION 4.1)
 project(EcoTorch)
 
-set(CMAKE_CXX_STANDARD 17)
-set(PACKAGE_NAME "apple")
+if(APPLE)
+    set(CMAKE_CXX_STANDARD 17)
+    set(PACKAGE_NAME "apple")
 
-find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+    find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
-execute_process(
-        COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        OUTPUT_VARIABLE nanobind_ROOT
-)
-find_package(nanobind CONFIG REQUIRED)
+    execute_process(
+            COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            OUTPUT_VARIABLE nanobind_ROOT
+    )
+    find_package(nanobind CONFIG REQUIRED)
 
-nanobind_add_module(
-        ${PACKAGE_NAME}
-        NB_STATIC
-        src/ecotorch/watcher/cpp/bindings.cpp
-)
+    nanobind_add_module(
+            ${PACKAGE_NAME}
+            NB_STATIC
+            src/ecotorch/watcher/cpp/bindings.cpp
+    )
 
-find_library(IOKIT_FRAMEWORK IOKit REQUIRED)
-find_library(COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+    find_library(IOKIT_FRAMEWORK IOKit REQUIRED)
+    find_library(COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
 
-execute_process(
-        COMMAND xcrun --sdk macosx --show-sdk-path
-        OUTPUT_VARIABLE MACOS_SDK_PATH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+    execute_process(
+            COMMAND xcrun --sdk macosx --show-sdk-path
+            OUTPUT_VARIABLE MACOS_SDK_PATH
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
 
-message(STATUS "Active SDK Path: ${MACOS_SDK_PATH}")
+    message(STATUS "Active SDK Path: ${MACOS_SDK_PATH}")
 
-# NOTE: IOReport is loaded dynamically in the C++ code now,
-# so we do not need to link against it here.
+    target_link_libraries(${PACKAGE_NAME} PRIVATE
+            ${IOKIT_FRAMEWORK}
+            ${COREFOUNDATION_FRAMEWORK}
+            IOReport
+    )
 
-target_link_libraries(${PACKAGE_NAME} PRIVATE
-        ${IOKIT_FRAMEWORK}
-        ${COREFOUNDATION_FRAMEWORK}
-)
+    target_compile_options(${PACKAGE_NAME} PRIVATE -fblocks)
 
-target_compile_options(${PACKAGE_NAME} PRIVATE -fblocks)
-
-install(TARGETS ${PACKAGE_NAME} DESTINATION ecotorch/watcher)
+    install(TARGETS ${PACKAGE_NAME} DESTINATION ecotorch/watcher)
+endif()
