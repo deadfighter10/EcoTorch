@@ -41,3 +41,6 @@ data/
 *.sqlite
 .DS_Store
 Thumbs.db
+
+src/ecotorch/wallet/datasets
+src/ecotorch/wallet/infotable.csv
