@@ -6,13 +6,13 @@ import torchvision.transforms as transforms
 import torch.optim as optim
 import os
 
-from ecotorch import evaluate, train, Mode, TrainTracker, EvalTracker
+from ecotorch import evaluate, train, TrainTracker, EvalTracker
 
 # Deletable, I mostly run my codes in Terminal, so it is cleaner from me to run the tests this way
 os.system('clear' if os.name != "nt" else 'cls')
 
 
-EPOCH = 5
+EPOCH = 40
 BATCH_SIZE = 16
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.mps.is_available() else "cpu")
 

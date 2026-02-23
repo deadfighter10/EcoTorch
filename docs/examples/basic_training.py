@@ -63,12 +63,12 @@ def main():
         
         final_loss = loss.item()
 
-        # 4. Calculate and display efficiency score
-        score = tracker.calculate_efficiency_score(initial_loss=initial_loss, final_loss=final_loss)
-        print("\n--- Training Results ---")
-        print(f"Total Energy Used: {tracker.used_energy} kWh")
-        print(f"Total Time: {tracker.total_time} seconds")
-        print(f"Efficiency Score: {score}")
+    # 4. Calculate and display efficiency score
+    score = tracker.calculate_efficiency_score(initial_loss=initial_loss, final_loss=final_loss)
+    print("\n--- Training Results ---")
+    print(f"Total Energy Used: {tracker.used_energy} kWh")
+    print(f"Total Time: {tracker.total_time} seconds")
+    print(f"Efficiency Score: {score}")
 
 if __name__ == "__main__":
     main()
