@@ -47,6 +47,7 @@ jobs:
           python -V
           uv --version
           cmake --version
+          uv venv
 
       - name: Install build and dev dependencies with uv
         run: |
