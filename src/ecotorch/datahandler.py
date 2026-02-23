@@ -1,4 +1,4 @@
-from .geolocator import get_location, convert_country_to_iso
+from ._geolocator import get_location, convert_country_to_iso
 
 from pathlib import Path
 import pandas as pd

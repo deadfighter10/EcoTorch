@@ -1,5 +1,7 @@
 from .datahandler import DataHandler
 from .watcher import Monitor
+from .wallet import Extractor
+from ._geolocator import get_location
 
 import torch
 import torch.nn as nn
@@ -179,6 +181,7 @@ class Tracker(ABC):
             self._dataloader = test_dataloader
             self._epochs = 0
         self._country = country
+        self._extractor = Extractor()
 
     def __enter__(self):
         self._start_time = time.time()
@@ -197,6 +200,7 @@ class Tracker(ABC):
         print(f"The block emitted {self._co2_emission}g CO2")
         print(f"The block took {self.total_time} second to execute.")
         print(f"The block used {self.used_energy} kwh to execute.")
+        print(f"The block used {self.block_cost} USD to execute.")
         return False
 
     @abstractmethod
@@ -234,6 +238,12 @@ class Tracker(ABC):
     @property
     def used_energy(self) -> float:
         return round(self._calculate_kwh, 4)
+
+    @property
+    def block_cost(self) -> float:
+        if self._country is None:
+            self._country = get_location()
+        return self._extractor.calculate_cost(self._country, self._calculate_kwh)
 
 
 class TrainTracker(Tracker):
