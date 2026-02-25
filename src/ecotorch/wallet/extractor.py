@@ -15,7 +15,7 @@ class Extractor:
         except FileNotFoundError:
             raise FileNotFoundError("Internal error, please contact the developers.")
         except json.JSONDecodeError as e:
-            raise json.JSONDecodeError("Internal error, please contact developers.")
+            raise json.JSONDecodeError("Internal error, please contact developers.", e.doc, e.pos)
         return data
 
     def calculate_cost(self, country_code, kwh) -> float:

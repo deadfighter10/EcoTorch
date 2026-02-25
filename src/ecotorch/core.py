@@ -240,6 +240,13 @@ class Tracker(ABC):
         return round(self._calculate_kwh, 4)
 
     @property
+    def total_cost(self) -> float:
+        """
+        Returns the total cost in USD (rounded to 4 decimal places).
+        """
+        return self.block_cost
+
+    @property
     def block_cost(self) -> float:
         if self._country is None:
             self._country = get_location()
