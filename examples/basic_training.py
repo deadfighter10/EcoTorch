@@ -2,7 +2,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms
+
 from ecotorch import TrainTracker
+
 
 # 1. Define a simple CNN for MNIST
 class SimpleCNN(nn.Module):
@@ -21,17 +23,18 @@ class SimpleCNN(nn.Module):
         x = self.fc2(x)
         return torch.log_softmax(x, dim=1)
 
+
 def main():
     # 2. Setup device and data
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
-    
+    transform = transforms.Compose(
+        [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+    )
+
     train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('./data', train=True, download=True, transform=transform),
-        batch_size=64, shuffle=True
+        datasets.MNIST("./data", train=True, download=True, transform=transform),
+        batch_size=64,
+        shuffle=True,
     )
 
     model = SimpleCNN().to(device)
@@ -42,9 +45,11 @@ def main():
     print("Starting tracked training...")
 
     # 3. Use TrainTracker as a context manager
-    with TrainTracker(model=model, epochs=epochs, train_dataloader=train_loader) as tracker:
+    with TrainTracker(
+        model=model, epochs=epochs, train_dataloader=train_loader
+    ) as tracker:
         initial_loss = None
-        
+
         for epoch in range(epochs):
             model.train()
             for batch_idx, (data, target) in enumerate(train_loader):
@@ -54,21 +59,26 @@ def main():
                 loss = criterion(output, target)
                 loss.backward()
                 optimizer.step()
-                
+
                 if initial_loss is None:
                     initial_loss = loss.item()
-                
+
                 if batch_idx % 100 == 0:
-                    print(f"Train Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)}] Loss: {loss.item():.6f}")
-        
+                    print(
+                        f"Train Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)}] Loss: {loss.item():.6f}"
+                    )
+
         final_loss = loss.item()
 
     # 4. Calculate and display efficiency score
-    score = tracker.calculate_efficiency_score(initial_loss=initial_loss, final_loss=final_loss)
+    score = tracker.calculate_efficiency_score(
+        initial_loss=initial_loss, final_loss=final_loss
+    )
     print("\n--- Training Results ---")
     print(f"Total Energy Used: {tracker.used_energy} kWh")
     print(f"Total Time: {tracker.total_time} seconds")
     print(f"Efficiency Score: {score}")
+
 
 if __name__ == "__main__":
     main()
