@@ -10,12 +10,14 @@ class Extractor:
 
     def _load_json(self, path) -> dict:
         try:
-            with open(path, 'r', encoding='utf-8') as file:
+            with open(path, "r", encoding="utf-8") as file:
                 data = json.load(file)
         except FileNotFoundError:
             raise FileNotFoundError("Internal error, please contact the developers.")
         except json.JSONDecodeError as e:
-            raise json.JSONDecodeError("Internal error, please contact developers.", e.doc, e.pos)
+            raise json.JSONDecodeError(
+                "Internal error, please contact developers.", e.doc, e.pos
+            )
         return data
 
     def calculate_cost(self, country_code, kwh) -> float:

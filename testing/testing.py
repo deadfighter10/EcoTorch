@@ -1,51 +1,45 @@
+import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as f
+import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
-import torch.optim as optim
-import os
 
-from ecotorch import evaluate, train, TrainTracker, EvalTracker
+from ecotorch import EvalTracker, TrainTracker, evaluate, train
 
 # Deletable, I mostly run my codes in Terminal, so it is cleaner from me to run the tests this way
-os.system('clear' if os.name != "nt" else 'cls')
+os.system("clear" if os.name != "nt" else "cls")
 
 
 EPOCH = 40
 BATCH_SIZE = 16
-device = "cuda" if torch.cuda.is_available() else ("mps" if torch.mps.is_available() else "cpu")
+device = (
+    "cuda"
+    if torch.cuda.is_available()
+    else ("mps" if torch.mps.is_available() else "cpu")
+)
 
 
 transform = transforms.ToTensor()
 
 train_dataset = torchvision.datasets.MNIST(
-    root="./data",
-    train=True,
-    download=True,
-    transform=transform
+    root="./data", train=True, download=True, transform=transform
 )
 
 test_dataset = torchvision.datasets.MNIST(
-    root="./data",
-    train=True,
-    download=True,
-    transform=transform
+    root="./data", train=True, download=True, transform=transform
 )
 
 train_loader = torch.utils.data.DataLoader(
-    train_dataset,
-    batch_size=BATCH_SIZE,
-    shuffle=True,
-    num_workers=0
+    train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0
 )
 
 test_loader = torch.utils.data.DataLoader(
-    test_dataset,
-    batch_size=BATCH_SIZE,
-    shuffle=False,
-    num_workers=0
+    test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0
 )
+
 
 class TestNet(nn.Module):
     def __init__(self):
@@ -62,17 +56,28 @@ class TestNet(nn.Module):
         x = self.fc3(x)
         return x
 
+
 net = TestNet().to(device)
 criterion = nn.CrossEntropyLoss().to(device)
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-with TrainTracker(epochs=EPOCH, model=net, train_dataloader=train_loader) as train_tracker:
-    net, final_loss, first_loss, _, _ = train(net, criterion, optimizer, train_loader, EPOCH, device)
-print(train_tracker.calculate_efficiency_score(initial_loss=first_loss, final_loss=final_loss))
+with TrainTracker(
+    epochs=EPOCH, model=net, train_dataloader=train_loader
+) as train_tracker:
+    net, final_loss, first_loss, _, _ = train(
+        net, criterion, optimizer, train_loader, EPOCH, device
+    )
+print(
+    train_tracker.calculate_efficiency_score(
+        initial_loss=first_loss, final_loss=final_loss
+    )
+)
 
 print("Finished training")
 
-with EvalTracker(test_dataloader=test_loader, train_tracker=train_tracker) as eval_tracker:
+with EvalTracker(
+    test_dataloader=test_loader, train_tracker=train_tracker
+) as eval_tracker:
     acc = evaluate(net, test_loader, device)
 
 print(eval_tracker.calculate_efficiency_score(accuracy=acc))

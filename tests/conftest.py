@@ -1,12 +1,12 @@
-import sys
 import os
+import sys
 import types
 
 # Ensure package source is importable
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
 # Stub macOS apple watcher extension so ecotorch.watcher can import on Darwin
-APPLE_MODULE = 'ecotorch.watcher.apple'
+APPLE_MODULE = "ecotorch.watcher.apple"
 if APPLE_MODULE not in sys.modules:
     apple_mod = types.ModuleType(APPLE_MODULE)
 
@@ -24,31 +24,32 @@ if APPLE_MODULE not in sys.modules:
     sys.modules[APPLE_MODULE] = apple_mod
 
 # Stub external runtime-only deps used in geolocator to avoid import errors in tests
-if 'geoip2fast' not in sys.modules:
-    geoip_mod = types.ModuleType('geoip2fast')
+if "geoip2fast" not in sys.modules:
+    geoip_mod = types.ModuleType("geoip2fast")
 
     class GeoIP2Fast:  # minimal stub, tests will patch methods as needed
         def lookup(self, ip):
             class _R:
-                country_name = 'World'
+                country_name = "World"
+
             return _R()
 
     geoip_mod.GeoIP2Fast = GeoIP2Fast
-    sys.modules['geoip2fast'] = geoip_mod
+    sys.modules["geoip2fast"] = geoip_mod
 
-if 'pycountry' not in sys.modules:
-    pc_mod = types.ModuleType('pycountry')
+if "pycountry" not in sys.modules:
+    pc_mod = types.ModuleType("pycountry")
 
     class _Countries:
         def search_fuzzy(self, name):
             return []
 
     pc_mod.countries = _Countries()
-    sys.modules['pycountry'] = pc_mod
+    sys.modules["pycountry"] = pc_mod
 
 # Stub pynvml to allow importing Linux/Windows monitors if needed
-if 'pynvml' not in sys.modules:
-    pynvml_mod = types.ModuleType('pynvml')
+if "pynvml" not in sys.modules:
+    pynvml_mod = types.ModuleType("pynvml")
 
     class NVMLError(Exception):
         pass
@@ -78,4 +79,4 @@ if 'pynvml' not in sys.modules:
     pynvml_mod.nvmlDeviceGetPowerUsage = nvmlDeviceGetPowerUsage
     pynvml_mod.nvmlDeviceGetUtilizationRates = nvmlDeviceGetUtilizationRates
 
-    sys.modules['pynvml'] = pynvml_mod
+    sys.modules["pynvml"] = pynvml_mod

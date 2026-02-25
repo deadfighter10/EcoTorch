@@ -17,8 +17,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
-        python: ["3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.11", "3.13"]
 
     env:
       PYTHONUNBUFFERED: "1"
@@ -27,44 +27,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
-
       - name: Set up uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+          python-version: ${{ matrix.python }}
 
-      - name: Set up CMake (>=3.24)
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: ^3.24.0
+      - name: Install dependencies
+        run: uv sync --group dev
 
-      - name: Show tool versions
+      - name: Lint and format check
         run: |
-          python -V
-          uv --version
-          cmake --version
-          uv venv
-
-      - name: Install build and dev dependencies with uv
-        run: |
-          uv pip install -U pip wheel build
-          uv pip install -e . pytest pytest-cov flake8 black isort
-
-      - name: Check formatting with black
-        run: black --check .
-
-      - name: Check imports order with isort
-        run: isort --check-only .
+          uv run black --check .
+          uv run isort --check-only .
+          uv run flake8 .
 
       - name: Run tests with coverage
-        run: pytest --cov=ecotorch --cov-report=xml --cov-report=term-missing
+        run: uv run pytest --cov=ecotorch --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml
           fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}

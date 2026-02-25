@@ -1,9 +1,17 @@
+from unittest.mock import patch
+
 import pytest
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from unittest.mock import patch
-from ecotorch.core import _transfer_optimizer_to_device, evaluate, train, TrainTracker, EvalTracker
+
+from ecotorch.core import (
+    EvalTracker,
+    TrainTracker,
+    _transfer_optimizer_to_device,
+    evaluate,
+    train,
+)
 
 
 class SimpleModel(nn.Module):
@@ -37,14 +45,14 @@ def test_transfer_optimizer_to_device():
 
     # Mock optimizer state
     p = list(model.parameters())[0]
-    optimizer.state[p] = {'step': 0, 'momentum_buffer': torch.zeros_like(p)}
+    optimizer.state[p] = {"step": 0, "momentum_buffer": torch.zeros_like(p)}
 
     # Just ensure no exceptions for CPU
-    _transfer_optimizer_to_device(optimizer, 'cpu')
+    _transfer_optimizer_to_device(optimizer, "cpu")
 
 
 def test_evaluate(mock_model, mock_loader):
-    device = 'cpu'
+    device = "cpu"
     accuracy = evaluate(mock_model, mock_loader, device)
     assert isinstance(accuracy, float)
     assert 0.0 <= accuracy <= 1.0
@@ -53,7 +61,7 @@ def test_evaluate(mock_model, mock_loader):
 def test_train(mock_model, mock_loader):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(mock_model.parameters(), lr=0.01)
-    device = 'cpu'
+    device = "cpu"
 
     # Train for 1 epoch
     trained_model, loss, first_loss, crit, opt = train(
@@ -68,10 +76,14 @@ def test_train(mock_model, mock_loader):
 
 
 def test_traintracker_context_and_score(mock_model, mock_loader):
-    with patch('ecotorch.core._Monitor') as MockMonitor, \
-         patch('ecotorch.datahandler.DataHandler.get_intensity', return_value=0.5):
+    with (
+        patch("ecotorch.core._Monitor") as MockMonitor,
+        patch("ecotorch.datahandler.DataHandler.get_intensity", return_value=0.5),
+    ):
 
-        with TrainTracker(model=mock_model, epochs=1, train_dataloader=mock_loader, country='USA') as tracker:
+        with TrainTracker(
+            model=mock_model, epochs=1, train_dataloader=mock_loader, country="USA"
+        ) as tracker:
             assert tracker._start_time != 0
             MockMonitor.return_value.start.assert_called_once()
             # Simulate power samples in Watts collected each second
@@ -87,12 +99,18 @@ def test_traintracker_context_and_score(mock_model, mock_loader):
 
 
 def test_evaltracker_context_and_score(mock_model, mock_loader):
-    with patch('ecotorch.core._Monitor') as MockMonitor, \
-         patch('ecotorch.datahandler.DataHandler.get_intensity', return_value=0.5):
+    with (
+        patch("ecotorch.core._Monitor") as MockMonitor,
+        patch("ecotorch.datahandler.DataHandler.get_intensity", return_value=0.5),
+    ):
 
         # Reuse TrainTracker's model/handler via constructor
-        train_tracker = TrainTracker(model=mock_model, epochs=1, train_dataloader=mock_loader, country='USA')
-        with EvalTracker(test_dataloader=mock_loader, train_tracker=train_tracker) as et:
+        train_tracker = TrainTracker(
+            model=mock_model, epochs=1, train_dataloader=mock_loader, country="USA"
+        )
+        with EvalTracker(
+            test_dataloader=mock_loader, train_tracker=train_tracker
+        ) as et:
             MockMonitor.return_value.start.assert_called_once()
             et.energy_usage = [50.0]
         MockMonitor.return_value.join.assert_called_once()
@@ -100,13 +118,15 @@ def test_evaltracker_context_and_score(mock_model, mock_loader):
         score = et.calculate_efficiency_score(accuracy=0.85)
         assert isinstance(score, float)
         assert 0.0 <= score <= 1.0
-        assert et.country == 'USA'
+        assert et.country == "USA"
         assert et.total_cost >= 0
 
 
 def test_validation_errors(mock_model, mock_loader):
-    with patch('ecotorch.core._Monitor'), \
-         patch('ecotorch.datahandler.DataHandler.get_intensity', return_value=0.5):
+    with (
+        patch("ecotorch.core._Monitor"),
+        patch("ecotorch.datahandler.DataHandler.get_intensity", return_value=0.5),
+    ):
 
         # Calling before context exit should raise
         tt = TrainTracker(model=mock_model, epochs=1, train_dataloader=mock_loader)
@@ -114,10 +134,14 @@ def test_validation_errors(mock_model, mock_loader):
             tt.calculate_efficiency_score(initial_loss=1.0, final_loss=0.5)
 
         # After exit, invalid accuracy bounds should raise
-        with TrainTracker(model=mock_model, epochs=1, train_dataloader=mock_loader) as tt2:
+        with TrainTracker(
+            model=mock_model, epochs=1, train_dataloader=mock_loader
+        ) as tt2:
             tt2.energy_usage = [10.0]
         with pytest.raises(ValueError):
-            tt2.calculate_efficiency_score(initial_loss=1.0, final_loss=0.5, accuracy=1.5)
+            tt2.calculate_efficiency_score(
+                initial_loss=1.0, final_loss=0.5, accuracy=1.5
+            )
 
         # EvalTracker: accuracy is required and must be in [0,1]
         with EvalTracker(test_dataloader=mock_loader, model=mock_model) as et:

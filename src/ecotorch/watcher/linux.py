@@ -1,5 +1,7 @@
 import pynvml
+
 from .interface import PowerMonitor
+
 
 class LinuxMonitor(PowerMonitor):
     def __init__(self):
@@ -19,7 +21,7 @@ class LinuxMonitor(PowerMonitor):
             handle = pynvml.nvmlDeviceGetHandleByIndex(i)
             power_milliwatts = pynvml.nvmlDeviceGetPowerUsage(handle)
 
-            total_power_watts += (power_milliwatts / 1000.0)
+            total_power_watts += power_milliwatts / 1000.0
 
         return total_power_watts
 

@@ -1,16 +1,18 @@
-from .datahandler import DataHandler
-from .watcher import Monitor
-from .wallet import Extractor
-from ._geolocator import get_location
+import math
+import threading
+import time
+from abc import ABC, abstractmethod
+from enum import Enum, auto
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import time
-import threading
-from enum import Enum, auto
-import math
-from abc import ABC, abstractmethod
+
+from ._geolocator import get_location
+from .datahandler import DataHandler
+from .wallet import Extractor
+from .watcher import Monitor
+
 
 def _transfer_optimizer_to_device(optimizer: optim.Optimizer, device: str) -> None:
     """
@@ -35,10 +37,9 @@ def _transfer_optimizer_to_device(optimizer: optim.Optimizer, device: str) -> No
                     if subparameter._grad is not None:
                         subparameter._grad.data = subparameter._grad.data.to(device)
 
+
 def evaluate(
-        model: nn.Module,
-        test_loader: torch.utils.data.DataLoader,
-        device: str
+    model: nn.Module, test_loader: torch.utils.data.DataLoader, device: str
 ) -> float:
     """
     Base implementation of an accuracy-based evaluation.
@@ -62,14 +63,16 @@ def evaluate(
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
-    return round(correct/total, 4)
+    return round(correct / total, 4)
 
-def train(model: nn.Module,
-          criterion: nn.Module,
-          optimizer: optim.Optimizer,
-          train_loader:torch.utils.data.DataLoader,
-          epoch: int,
-          device: str
+
+def train(
+    model: nn.Module,
+    criterion: nn.Module,
+    optimizer: optim.Optimizer,
+    train_loader: torch.utils.data.DataLoader,
+    epoch: int,
+    device: str,
 ) -> tuple[nn.Module, float, float, nn.Module, optim.Optimizer]:
     """
     Trains a neural network model using the provided dataset and optimizer.
@@ -117,9 +120,9 @@ def train(model: nn.Module,
                 first_loss = loss.item()
 
             if i % 500 == 499:
-                print(f'[{e + 1}, {i + 1:5d}] loss: {running_loss / 500:.3f}')
+                print(f"[{e + 1}, {i + 1:5d}] loss: {running_loss / 500:.3f}")
                 running_loss = 0.0
-    return model, running_loss/500, first_loss, criterion, optimizer
+    return model, running_loss / 500, first_loss, criterion, optimizer
 
 
 class ModeError(Exception):
@@ -130,6 +133,7 @@ class Mode(Enum):
     TRAIN = auto()
     EVAL = auto()
     OTHER = auto()
+
 
 class Tracker(ABC):
     """
@@ -150,14 +154,16 @@ class Tracker(ABC):
     :ivar _end_time: The timestamp capturing the end of the monitoring period.
     :type _end_time: float
     """
-    def __init__(self,
+
+    def __init__(
+        self,
         mode: Mode,
         model: nn.Module,
         epochs: int = None,
         train_dataloader: torch.utils.data.DataLoader = None,
         test_dataloader: torch.utils.data.DataLoader = None,
         data_handler: DataHandler = None,
-        country: str = None
+        country: str = None,
     ) -> None:
         self.energy_usage = []
         self.cost = 0
@@ -204,7 +210,12 @@ class Tracker(ABC):
         return False
 
     @abstractmethod
-    def calculate_efficiency_score(self, accuracy: float = None, initial_loss: float = None, final_loss: float = None) -> float:
+    def calculate_efficiency_score(
+        self,
+        accuracy: float = None,
+        initial_loss: float = None,
+        final_loss: float = None,
+    ) -> float:
         """
         Calculate the efficiency score of a model.
 
@@ -228,7 +239,10 @@ class Tracker(ABC):
 
     @property
     def _co2_emission(self) -> float:
-        if self._country is not None: return round(self._calculate_kwh * self._handler.get_intensity(self._country), 4)
+        if self._country is not None:
+            return round(
+                self._calculate_kwh * self._handler.get_intensity(self._country), 4
+            )
         return round(self._calculate_kwh * self._handler.get_intensity(), 4)
 
     @property
@@ -254,19 +268,31 @@ class Tracker(ABC):
 
 
 class TrainTracker(Tracker):
-    def __init__(self,
+    def __init__(
+        self,
         model: nn.Module,
         epochs: int,
         train_dataloader: torch.utils.data.DataLoader,
-        country: str = None
+        country: str = None,
     ) -> None:
         self._model = model
         self._epochs = epochs
         self._train_dataloader = train_dataloader
         self._country = country
-        super().__init__(Mode.TRAIN, model, epochs=epochs, train_dataloader=train_dataloader, country=country)
+        super().__init__(
+            Mode.TRAIN,
+            model,
+            epochs=epochs,
+            train_dataloader=train_dataloader,
+            country=country,
+        )
 
-    def calculate_efficiency_score(self, accuracy: float = None, initial_loss: float = None, final_loss: float = None) -> float:
+    def calculate_efficiency_score(
+        self,
+        accuracy: float = None,
+        initial_loss: float = None,
+        final_loss: float = None,
+    ) -> float:
         """
         Calculate the efficiency score of a model.
 
@@ -303,7 +329,7 @@ class TrainTracker(Tracker):
     @property
     def _calculate_c_score(self) -> int:
         P = sum(p.numel() for p in self._model.parameters())
-        D = getattr(self._dataloader.dataset, '__len__', lambda: 0)() * self._epochs
+        D = getattr(self._dataloader.dataset, "__len__", lambda: 0)() * self._epochs
         return 6 * P * D
 
     @property
@@ -316,7 +342,8 @@ class TrainTracker(Tracker):
 
 
 class EvalTracker(Tracker):
-    def __init__(self,
+    def __init__(
+        self,
         test_dataloader: torch.utils.data.DataLoader,
         train_tracker: TrainTracker = None,
         model: nn.Module = None,
@@ -327,14 +354,27 @@ class EvalTracker(Tracker):
                 self._country = country
             else:
                 self._country = train_tracker.country
-            super().__init__(Mode.EVAL, train_tracker.model, test_dataloader=test_dataloader, data_handler=train_tracker._data_handler, country=self._country)
+            super().__init__(
+                Mode.EVAL,
+                train_tracker.model,
+                test_dataloader=test_dataloader,
+                data_handler=train_tracker._data_handler,
+                country=self._country,
+            )
         else:
             if model is None:
                 raise ValueError("Please provide a model or TrainTracker!")
 
-            super().__init__(Mode.EVAL, model, test_dataloader=test_dataloader, country=country)
+            super().__init__(
+                Mode.EVAL, model, test_dataloader=test_dataloader, country=country
+            )
 
-    def calculate_efficiency_score(self, accuracy: float = None, initial_loss: float = None, final_loss: float = None) -> float:
+    def calculate_efficiency_score(
+        self,
+        accuracy: float = None,
+        initial_loss: float = None,
+        final_loss: float = None,
+    ) -> float:
         """
         Calculate the efficiency score of a model.
 
@@ -365,7 +405,7 @@ class EvalTracker(Tracker):
     @property
     def _calculate_c_score(self) -> int:
         P = sum(p.numel() for p in self._model.parameters())
-        D = getattr(self._dataloader.dataset, '__len__', lambda: 0)()
+        D = getattr(self._dataloader.dataset, "__len__", lambda: 0)()
         return 2 * P * D
 
     @property
@@ -374,11 +414,7 @@ class EvalTracker(Tracker):
 
 
 class _Monitor(threading.Thread):
-    def __init__(self,
-        name,
-        data_list: list,
-        stop_event: threading.Event
-    ) -> None:
+    def __init__(self, name, data_list: list, stop_event: threading.Event) -> None:
         super().__init__()
         self._name = name
         self._data_list = data_list

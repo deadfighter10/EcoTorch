@@ -1,8 +1,8 @@
-from pathlib import Path
-import pandas as pd
-from pprint import pprint
 import json
+from pathlib import Path
+from pprint import pprint
 
+import pandas as pd
 import pycountry
 
 data = {}
@@ -19,8 +19,9 @@ conversion = {
     "BRL": 0.19,
     "SGD": 0.79,
     "RON": 0.23,
-    "USD": 1
+    "USD": 1,
 }
+
 
 def convert_country_to_iso(country_name: str):
     try:
@@ -29,12 +30,13 @@ def convert_country_to_iso(country_name: str):
     except (LookupError, IndexError):
         return "World"
 
+
 info_table = pd.read_csv("./src/ecotorch/wallet/infotable.csv")
 p = Path("./src/ecotorch/wallet/datasets")
-for file_path in p.glob('*.csv'):
+for file_path in p.glob("*.csv"):
     df = pd.read_csv(file_path)
     name = str(file_path.name).split("_")[0]
-    mask = (info_table['Country'] == name)
+    mask = info_table["Country"] == name
     try:
         unit = str(info_table.loc[mask, "Price Unit"].iloc[0])
         price_units[name] = unit.split("/")
@@ -61,5 +63,5 @@ base_path = Path(__file__).parent
 file_path = base_path / "electricity_price.json"
 
 # Open the file in write mode and dump the data
-with open(file_path, 'w') as json_file:
+with open(file_path, "w") as json_file:
     json.dump(data, json_file, indent=4)

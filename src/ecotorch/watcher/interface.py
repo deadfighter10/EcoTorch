@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class PowerMonitor(ABC):
     """
     The blueprint class for the platform specific subclasses.

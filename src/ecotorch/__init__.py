@@ -2,9 +2,9 @@
 A lightweight package to measure the ecological and financial effect of training and evaluation of pytorch projects.
 """
 
-from .core import TrainTracker, EvalTracker, evaluate, train, Mode
+from ._geolocator import get_ip, get_location
+from .core import EvalTracker, Mode, TrainTracker, evaluate, train
 from .datahandler import DataHandler
-from ._geolocator import get_location, get_ip
 
 __version__ = "0.2.5"
 __author__ = "David Leonard Nagy"
@@ -15,11 +15,4 @@ __maintainer__ = "David Leonard Nagy"
 __email__ = "nagy.david.leonard@gmail.com"
 __status__ = "Development"
 
-__all__ = [
-    "TrainTracker",
-    "EvalTracker",
-    "DataHandler",
-    "evaluate",
-    "train",
-    "Mode"
-]
+__all__ = ["TrainTracker", "EvalTracker", "DataHandler", "evaluate", "train", "Mode"]

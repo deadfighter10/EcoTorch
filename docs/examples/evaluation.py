@@ -1,7 +1,9 @@
 import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
+
 from ecotorch import EvalTracker
+
 
 # 1. Define a simple CNN for MNIST (same as in basic_training.py)
 class SimpleCNN(nn.Module):
@@ -20,17 +22,18 @@ class SimpleCNN(nn.Module):
         x = self.fc2(x)
         return torch.log_softmax(x, dim=1)
 
+
 def main():
     # 2. Setup device and data
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
-    
+    transform = transforms.Compose(
+        [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+    )
+
     test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('./data', train=False, transform=transform),
-        batch_size=1000, shuffle=True
+        datasets.MNIST("./data", train=False, transform=transform),
+        batch_size=1000,
+        shuffle=True,
     )
 
     # Assume a pre-trained model
@@ -50,7 +53,7 @@ def main():
                 pred = output.argmax(dim=1, keepdim=True)
                 correct += pred.eq(target.view_as(pred)).sum().item()
                 total += target.size(0)
-        
+
         accuracy = correct / total
 
         # 4. Calculate and display efficiency score
@@ -60,6 +63,7 @@ def main():
         print(f"Total Energy Used: {tracker.used_energy} kWh")
         print(f"Total Time: {tracker.total_time} seconds")
         print(f"Efficiency Score: {score}")
+
 
 if __name__ == "__main__":
     main()
