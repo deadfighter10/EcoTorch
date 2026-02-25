@@ -12,7 +12,8 @@ EcoTorch is a lightweight, plug-and-play Python package designed to measure and 
 
 - **Seamless Integration**: Track training and evaluation sessions using simple Python context managers.
 - **Hardware Monitoring**: Support for NVIDIA GPUs (via NVML) and Apple Silicon (via custom SMC monitoring).
-- **Global Carbon Intensity**: Automatically detects location and uses up-to-date carbon intensity data.
+- **Global Impact Tracking**: Automatically detects location and uses up-to-date carbon intensity and electricity price data.
+- **Financial Cost Reporting**: Estimates the financial cost of your PyTorch workloads in real-time.
 - **Efficiency Scoring**: Provides a specialized score that balances model improvement with environmental cost.
 
 ## Installation
