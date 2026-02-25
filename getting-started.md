@@ -90,5 +90,6 @@ When a `with` block for a tracker completes, EcoTorch prints basic metrics:
 - **CO2 Emissions**: The estimated carbon dioxide equivalents (in grams) emitted during the session, calculated from energy usage and your location's grid intensity.
 - **Execution Time**: Total wall-clock time in seconds.
 - **Energy Used**: Total energy consumed by the hardware in kWh.
+- **Financial Cost**: The estimated cost of the electricity used, based on regional electricity prices.
 
 The **Efficiency Score** is a metric between 0 and 1 (usually) that combines model improvement (loss reduction or accuracy) with environmental cost. A higher score indicates a more efficient model development or evaluation process.

@@ -18,10 +18,13 @@ The carbon footprint of an AI model depends on the energy used and the carbon in
 
 - **Energy (kWh)**: $\text{Total Energy (kWh)} = \frac{\sum \text{Power Readings (Watts)}}{3600000}$
 - **CO2 Emissions (g)**: $\text{CO2 Emissions} = \text{Total Energy (kWh)} \times \text{Carbon Intensity (gCO2/kWh)}$
+- **Financial Cost (USD)**: $\text{Cost} = \text{Total Energy (kWh)} \times \text{Electricity Price (USD/kWh)}$
 
 ### Data Source
 
 EcoTorch uses data from Ember's electricity data to determine carbon intensity. A local CSV file (`co2intensity.csv`) is included with the package, containing historical CO2 intensity values for various countries.
+
+Financial cost calculation uses electricity price data stored in `electricity_price.json`, which contains average household/commercial electricity prices in USD per kWh for various regions.
 
 ### Location Detection
 

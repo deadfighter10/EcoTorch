@@ -26,6 +26,7 @@ Calculates the efficiency score for the training session.
 
 ### Properties
 - **`used_energy`**: Returns the total energy used in kWh (rounded to 4 decimal places).
+- **`total_cost`**: Returns the total cost in USD (rounded to 4 decimal places).
 - **`total_time`**: Returns the total execution time in seconds.
 - **`country`**: Returns the ISO-3 code of the country being used for carbon intensity.
 
@@ -53,6 +54,7 @@ Calculates the efficiency score for the evaluation session.
 
 ### Properties
 - **`used_energy`**: Returns the total energy used in kWh.
+- **`total_cost`**: Returns the total cost in USD (rounded to 4 decimal places).
 - **`total_time`**: Returns the total execution time in seconds.
 
 ---
@@ -78,3 +80,17 @@ Returns the CO2 intensity (gCO2/kWh) for the specified country or the detected l
 
 #### `countries` (Property)
 Returns a sorted list of all countries for which CO2 intensity data is available.
+
+---
+
+## Extractor
+
+Internal class used to manage electricity price data and calculate financial costs.
+
+### Methods
+
+#### `calculate_cost(country_code, kwh)`
+Calculates the electricity cost for a given country and energy consumption.
+- **`country_code`** (`str`): ISO 3-letter country code.
+- **`kwh`** (`float`): Energy consumption in kilowatt-hours.
+- **Returns**: `float` - The calculated cost in USD.
