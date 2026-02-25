@@ -83,6 +83,7 @@ def test_traintracker_context_and_score(mock_model, mock_loader):
         score = tracker.calculate_efficiency_score(initial_loss=2.0, final_loss=1.0)
         assert isinstance(score, float)
         assert 0.0 <= score <= 1.0
+        assert tracker.total_cost >= 0
 
 
 def test_evaltracker_context_and_score(mock_model, mock_loader):
@@ -100,6 +101,7 @@ def test_evaltracker_context_and_score(mock_model, mock_loader):
         assert isinstance(score, float)
         assert 0.0 <= score <= 1.0
         assert et.country == 'USA'
+        assert et.total_cost >= 0
 
 
 def test_validation_errors(mock_model, mock_loader):

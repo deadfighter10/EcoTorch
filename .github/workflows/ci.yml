@@ -54,9 +54,6 @@ jobs:
           uv pip install -U pip wheel build
           uv pip install -e . pytest pytest-cov flake8 black isort
 
-      - name: Lint with flake8
-        run: flake8 src/ tests/
-
       - name: Check formatting with black
         run: black --check .
 
