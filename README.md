@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/deadfighter10/EcoTorch/branch/main/graph/badge.svg)](https://codecov.io/gh/deadfighter10/EcoTorch)
 [![PyPI version](https://img.shields.io/pypi/v/ecotorch.svg)](https://pypi.org/project/ecotorch/)
 [![Python versions](https://img.shields.io/pypi/pyversions/ecotorch.svg)](https://pypi.org/project/ecotorch/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: LGPL v3](https://img.shields.io/badge/License-LGPL_v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
 EcoTorch is a lightweight, plug-and-play Python package designed to measure and track the ecological and financial impact of training and evaluating PyTorch models.
 
@@ -64,4 +64,4 @@ We welcome contributions! Please see our [Contributing Guidelines](docs/contribu
 
 ## License
 
-EcoTorch is released under the MIT License.
+EcoTorch is released under the GNU LGPLv3 License.
